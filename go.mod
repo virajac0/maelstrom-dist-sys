@@ -1,4 +1,4 @@
-module maelstrom-echo
+module maelstrom-challenges
 
 go 1.25.5
 

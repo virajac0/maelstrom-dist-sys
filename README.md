@@ -14,18 +14,16 @@ The project uses a standard Go `cmd` layout to manage multiple binaries within a
 
 ### 1. Echo
 **Goal:** Implement a node that responds to "echo" messages with an "echo_ok" message.
-* **Status:** Completed.
 * **Key Learning:** Standard input/output protocol for Maelstrom and basic JSON message handling.
 * **Build:** `go build -o maelstrom-echo ./cmd/echo`.
 
 ### 2. Unique ID Generation
 **Goal:** Implement a globally unique ID generator that is **totally available**, even during network partitions.
-* **Status:** Completed.
 * **Approach:** Used a combination of the **Node ID** and an **Atomic Counter** to ensure uniqueness without cross-node communication.
 * **Consistency Model:** Prioritized **Availability** over **CAP Consistency** to survive network partitions.
 * **Build:** `go build -o maelstrom-unique-ids ./cmd/unique-ids`.
 
-## How to Run Tests
+## Testing
 
 To run the challenges, ensure you have the `maelstrom` binary installed and run the following commands from the root directory:
 

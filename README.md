@@ -19,8 +19,9 @@ The project uses a standard Go `cmd` layout to manage multiple binaries within a
 
 ### 2. Unique ID Generation
 **Goal:** Implement a globally unique ID generator that is **totally available**, even during network partitions.
-* **Approach:** Used a combination of the **Node ID** and an **Atomic Counter** to ensure uniqueness without cross-node communication.
-* **Consistency Model:** Prioritized **Availability** over **CAP Consistency** to survive network partitions.
+* **Key Learning:**
+** **Approach:** Used a combination of the **Node ID** and an **Atomic Counter** to ensure uniqueness without cross-node communication.
+** **Consistency Model:** Prioritized **Availability** over **CAP Consistency** to survive network partitions.
 * **Build:** `go build -o maelstrom-unique-ids ./cmd/unique-ids`.
 
 ## Testing

@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"sync"
+	"time"
 
 	maelstrom "github.com/jepsen-io/maelstrom/demo/go"
 )
@@ -40,8 +41,28 @@ func main() {
 		mu.Unlock()
 
 		for _, nID := range neighbours {
-			if nID.(string) != msg.Src {
-				n.Send(nID.(string), body)
+			dest := nID.(string)
+			if dest != msg.Src {
+				go func(target string, messageBody map[string]any) {
+					for {
+						done := make(chan struct{})
+
+						err := n.RPC(target, messageBody, func(reply maelstrom.Message) error {
+							close(done)
+							return nil
+						})
+
+						if err == nil {
+							select {
+							case <-done:
+								return
+							case <-time.After(500 * time.Millisecond):
+							}
+						} else {
+							time.Sleep(500 * time.Millisecond)
+						}
+					}
+				}(dest, body)
 			}
 		}
 

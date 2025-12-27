@@ -8,7 +8,8 @@ The project uses a standard Go `cmd` layout to manage multiple binaries within a
 
 * `cmd/echo/`: Source code for Challenge #1.
 * `cmd/unique-ids/`: Source code for Challenge #2.
-* `cmd/broadcast/`: Source code for Challenge #3. 
+* `cmd/broadcast/`: Source code for Challenge #3.
+* `cmd/grow-only-counter/`: Source code for Challenge #4.
 * `go.mod`: Project dependencies and module definition (`maelstrom-challenges`).
 
 ## Completed Challenges

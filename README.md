@@ -39,7 +39,7 @@ The project uses a standard Go `cmd` layout to manage multiple binaries within a
     * Efficient Broadcast, Pt 2: 269 ms median latency, 757 ms max latency, 2.80 msgs/op (~5.6 msgs/broadcast)
 * **Build:** `go build -o maelstrom-unique-ids ./cmd/broadcast`.
 
-### 3. Grow-Only Counter
+### 4. Grow-Only Counter
 **Goal:** Implement a stateless, grow-only counter that maintains a consistent global sum across a distributed cluster.
 * **Key Learnings:**
     * Each node is responsible for its own counter, stored in the KV store using the node's unique ID as the key.

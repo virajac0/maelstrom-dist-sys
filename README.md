@@ -37,6 +37,17 @@ The project uses a standard Go `cmd` layout to manage multiple binaries within a
     * Efficient Broadcast, Pt 1: 177 ms median latency, 237 ms max latency, 22.78 msgs/op (~45 msgs/broadcast)
     * Efficient Broadcast, Pt 2: 269 ms median latency, 757 ms max latency, 2.80 msgs/op (~5.6 msgs/broadcast)
 * **Build:** `go build -o maelstrom-unique-ids ./cmd/broadcast`.
+
+### 3. Grow-Only Counter
+**Goal:** Implement a stateless, grow-only counter that maintains a consistent global sum across a distributed cluster.
+* **Key Learnings:**
+    * Each node is responsible for its own counter, stored in the KV store using the node's unique ID as the key.
+    * Increments are performed using a Read-Modify-Write loop protected by Compare-And-Swap method to prevent lost updates when multiple requests hit the same node.
+    * The total count is calculated by iterating through all known node IDs, reading their individual buckets, and summing them locally.
+    * For eventual consistency, added a small delay (50ms) in the read handler to ensure that after a network partition "heals," the node allows enough time for the latest KV writes to propagate before returning the final sum.
+    * Specifically handles KeyDoesNotExist errors during reads by defaulting the bucket value to 0, allowing the counter to initialize correctly.
+    * We ensure statelessness as the Go binary holds no local counter state in RAM, ensuring that if a node restarts, it can resume counting immediately from the KV store.
+* **Build:** `go build -o maelstrom-counter ./cmd/grow-only-counter`.
   
 ## Testing
 
@@ -51,3 +62,6 @@ To run the challenges, ensure you have the `maelstrom` binary installed and run 
 
 # Challenge 3: Broadcast
 ./maelstrom test -w broadcast --bin ./maelstrom-broadcast --node-count 25 --time-limit 20 --rate 100 --latency 100
+
+# Challenge 4: Grow-Only Counter
+./maelstrom test -w g-counter --bin ./maelstrom-counter --node-count 3 --rate 100 --time-limit 20 --nemesis partition

@@ -8,6 +8,7 @@ The project uses a standard Go `cmd` layout to manage multiple binaries within a
 
 * `cmd/echo/`: Source code for Challenge #1.
 * `cmd/unique-ids/`: Source code for Challenge #2.
+* `cmd/broadcast/`: Source code for Challenge #3. 
 * `go.mod`: Project dependencies and module definition (`maelstrom-challenges`).
 
 ## Completed Challenges
@@ -23,6 +24,19 @@ The project uses a standard Go `cmd` layout to manage multiple binaries within a
     * Implementing thread-safe counters in Go using the `sync/atomic` package to ensure concurrency safety.
     * The approach involves using a combination of the node ID and an atomic counter to ensure uniqueness without cross-node communication. This enables us to prioritize availability over consistency in the event of network partitions. 
 * **Build:** `go build -o maelstrom-unique-ids ./cmd/unique-ids`.
+
+### 3. Broadcast
+**Goal:** Implement a distributed broadcast system where nodes gossip messages to reach eventual consistency across the cluster, even during network partitions.
+* **Key Learnings:**
+    * Single Node Broadcast: basic implementation of the three handlers (broadcast, read, and topology)
+    * Multi Node Broadcast: using locks in the three handlers to ensure thread safety; in broadcast, we can use a "seen" map to efficiently identify if a message has been seen be a node instance, otherwise utilize a n.Send() call.
+    * Fault Tolerant Broadcast: Retry Loop --> utilize a goroutine that involves a channel for a n.RPC() call with time after or sleep logic to continue retrying
+    * Efficient Broadcast, Pt 1: optimize network topology from a 2D grid to a flat star topology using "n0" as a hub to all other nodes as leaves. This limits the number of hops to two and we can have a retry RPC in place for the root in case of failure.
+    * Efficient Broadcast, Pt 2: achieve extreme message efficiency by using broadcast batching (trading small latency for higher throughput). Instead of nodes sending one message per value, they collect a bunch of values and then send (so either leaves collecting then sending slice of values to root to be sent out or the root sending to leaves a slice of values at once).
+* **Results:**
+    * Efficient Broadcast, Pt 1: 177 ms median latency, 237 ms max latency, 22.78 msgs/op (~45 msgs/broadcast)
+    * Efficient Broadcast, Pt 2: 269 ms median latency, 757 ms max latency, 2.80 msgs/op (~5.6 msgs/broadcast)
+* **Build:** `go build -o maelstrom-unique-ids ./cmd/broadcast`.
   
 ## Testing
 
@@ -34,3 +48,6 @@ To run the challenges, ensure you have the `maelstrom` binary installed and run 
 
 # Challenge 2: Unique IDs
 ./maelstrom test -w unique-ids --bin ./maelstrom-unique-ids --time-limit 30 --rate 1000 --node-count 3 --availability total --nemesis partition
+
+# Challenge 3: Broadcast
+./maelstrom test -w broadcast --bin ./maelstrom-broadcast --node-count 25 --time-limit 20 --rate 100 --latency 100

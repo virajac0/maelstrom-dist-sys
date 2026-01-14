@@ -10,7 +10,8 @@ The project uses a standard Go `cmd` layout to manage multiple binaries within a
 * `cmd/unique-ids/`: Source code for Challenge #2.
 * `cmd/broadcast/`: Source code for Challenge #3.
 * `cmd/grow-only-counter/`: Source code for Challenge #4.
-* `cmd/kafka/`: Source code for Challenge #5. 
+* `cmd/kafka/`: Source code for Challenge #5.
+* `cmd/kv-store/`: Source code for Challenge #6. 
 * `go.mod`: Project dependencies and module definition (`maelstrom-challenges`).
 
 ## Completed Challenges
@@ -72,7 +73,19 @@ The project uses a standard Go `cmd` layout to manage multiple binaries within a
 * **Results:** (with Baseline)
    * Entire network cost of 7.19 messages/operation and server cost (internal traffic between nodes and KV store) of **4.73 msgs/op**
    * 99.95% availability
-   * Satisfied no lost writes and monotonic offsets (accomplished with lin-kv in place of seq-kv; lin-kv always sees latest and is safe for CAS operations at the expensve of being slower, meanwhile sequential may see stale data and risk offset collisions but it is faster since it is merely going for "eventual consistency") 
+   * Satisfied no lost writes and monotonic offsets (accomplished with lin-kv in place of seq-kv; lin-kv always sees latest and is safe for CAS operations at the expensve of being slower, meanwhile sequential may see stale data and risk offset collisions but it is faster since it is merely going for "eventual consistency")
+ 
+### 6. Key-Value Store
+**Goal:** Implement a totally available, transactional key-value store that supports multi-key transactions with varying levels of isolation (Read Uncommitted and Read Committed).
+* **Key Learnings:**
+    * For single node, totally available, we used a sync.RWMutex to ensure atomic execution of a list of operations.
+    * For multi node, totally available (read uncommitted), we introduced background replication where nodes periodically broadcast their local kv snapshots to neighbors.
+      * Pros: Guaranteed availability; eventually all nodes see all unique writes.
+      * Cons: Allows Dirty Reads; nodes might see uncommitted data from other transactions.
+      * G0 Prevention: Since writes are unique per-key in this workload, merging incoming gossip into a local map naturally prevents "Dirty Writes" (clobbering data).
+    * For multi node, totally available (read committed), implemented a local buffer inside the transaction handler.
+      * Pros: Prevents G1a/b/c anomalies (Aborted Reads, Intermediate Reads). Other nodes only see a transaction's effect once it is fully committed locally.
+      * Cons: Increased memory overhead per transaction to hold the buffer before the final "publish" to the global state.
 
 ## Testing
 
@@ -93,3 +106,6 @@ To run the challenges, ensure you have the `maelstrom` binary installed and run 
 
 # Challenge 5: Kafka-Style Log
 ./maelstrom test -w kafka --bin ./maelstrom-kafka --node-count 2 --concurrency 2n --time-limit 20 --rate 1000
+
+# Challenge 6: Key-Value Store
+./maelstrom test -w txn-rw-register --bin ~/go/bin/maelstrom-txn --node-count 1 --time-limit 20 --rate 1000 --concurrency 2n --consistency-models read-uncommitted --availability total

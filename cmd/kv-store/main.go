@@ -66,7 +66,9 @@ func main() {
 
 		txn := body["txn"].([]any)
 
-		mu.Lock()
+		local_kv := make(map[any]any)
+
+		mu.RLock()
 		for _, op := range txn {
 			list := op.([]any)
 			opType := list[0].(string)
@@ -74,12 +76,24 @@ func main() {
 
 			switch opType {
 			case "r":
-				list[2] = kv[key]
+				if val, inLocal := local_kv[key]; inLocal {
+					list[2] = val
+				} else {
+					list[2] = kv[key]
+				}
 			case "w":
-				kv[key] = list[2]
+				local_kv[key] = list[2]
 			}
 		}
-		mu.Unlock()
+		mu.RUnlock()
+
+		if len(local_kv) > 0 {
+			mu.Lock()
+			for k, v := range local_kv {
+				kv[k] = v
+			}
+			mu.Unlock()
+		}
 
 		return n.Reply(msg, map[string]any{
 			"type": "txn_ok",
